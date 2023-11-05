@@ -16,7 +16,7 @@ class Village extends Model
      */
     public function district(): BelongsTo
     {
-        return $this->belongsTo(District::class, 'districtCode');
+        return $this->belongsTo(District::class, 'districtCode', "districtCode" );
     }
 
     //belongs to county
@@ -25,7 +25,7 @@ class Village extends Model
      */
     public function county(): BelongsTo
     {
-        return $this->belongsTo(County::class, 'countyCode');
+        return $this->belongsTo(County::class, 'countyCode', "countyCode");
     }
 
     //belongs to subcounty
@@ -34,10 +34,14 @@ class Village extends Model
      */
     public function subcounty(): BelongsTo
     {
-        return $this->belongsTo(Subcounty::class, 'subCountyCode');
+        return $this->belongsTo(SubCounty::class, 'subCountyCode', "subCountyCode");
     }
-    //has many villages
+    //belongs to parish
     /**
-     * Get the villages associated with the parish.
+     * Get the parish associated with the village.
      */
+    public function parish(): BelongsTo
+    {
+        return $this->belongsTo(Parish::class, 'parishCode', 'parishCode');
+    }
 }

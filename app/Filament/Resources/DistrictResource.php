@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\DistrictResource\Pages;
 use App\Filament\Resources\DistrictResource\RelationManagers;
+use App\Models\County;
 use App\Models\District;
 use Carbon\Carbon;
 use Filament\Actions\ActionGroup;
@@ -17,6 +18,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class DistrictResource extends Resource
@@ -24,20 +26,28 @@ class DistrictResource extends Resource
     protected static ?string $model = District::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ? string $recordTitleAttribute ="districtName";
+    
+    protected static ?string $navigationGroup = 'Uganda Data';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                //
-                Forms\Components\TextInput::make('districtCode')
-                    ->required()
-                    ->numeric()
-                    ->label('district Code'),
-                Forms\Components\TextInput::make('districtName')
-                    ->required()
-                    ->label('district Name'),
+                
+                 Forms\Components\Section::make('View District')
+                    ->description('These are the details of the district')
+                    ->schema([
+                        Forms\Components\TextInput::make('districtCode')
+                        ->required()
+                        ->numeric()
+                        ->label('district Code'),
+                    Forms\Components\TextInput::make('districtName')
+                        ->required()
+                        ->label('district Name'),
+                    ])
+
             ]);
     }
 
@@ -129,6 +139,12 @@ class DistrictResource extends Resource
     {
         return [
             //
+
+           RelationManagers\CountiesRelationManager::class,
+           RelationManagers\SubcountiesRelationManager::class,
+           RelationManagers\ParishesRelationManager::class,
+           RelationManagers\VillagesRelationManager::class
+
         ];
     }
 

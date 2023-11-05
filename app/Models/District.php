@@ -18,7 +18,7 @@ class District extends Model
      */
     public function counties():HasMany
     {
-        return $this->hasMany(County::class, 'districtCode');
+        return $this->hasMany(County::class, 'districtCode', 'districtCode');
     }
 
     //has many subcounties
@@ -27,7 +27,7 @@ class District extends Model
      */
     public function subcounties():HasMany
     {
-        return $this->hasMany(Subcounty::class, 'districtCode');
+        return $this->hasMany(SubCounty::class, 'districtCode', 'districtCode');
     }
 
     //has many parihes
@@ -37,7 +37,7 @@ class District extends Model
      */
     public function parishes():HasMany
     {
-        return $this->hasMany(Parish::class, 'districtCode');
+        return $this->hasMany(Parish::class, 'districtCode', 'districtCode');
     }
 
     //has many villages
@@ -46,6 +46,6 @@ class District extends Model
      */
     public function villages(): HasMany
     {
-        return $this->hasMany(Village::class, 'districtCode');
+        return $this->hasMany(Village::class, 'districtCode', 'districtCode');
     }
 }

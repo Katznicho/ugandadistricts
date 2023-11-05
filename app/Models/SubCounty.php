@@ -16,13 +16,13 @@ class SubCounty extends Model
     //belongs to district
     public function district():BelongsTo
     {
-        return $this->belongsTo(District::class, 'districtCode');
+        return $this->belongsTo(District::class, 'districtCode', "districtCode");
     }
 
     //belongs to county
     public function county(): BelongsTo
     {
-        return $this->belongsTo(County::class, 'countyCode');
+        return $this->belongsTo(County::class, 'countyCode', "countyCode");
     }
     //has many parishes
     /**
@@ -30,7 +30,7 @@ class SubCounty extends Model
      */
     public function parishes(): HasMany
     {
-        return $this->hasMany(Parish::class, 'subCountyCode');
+        return $this->hasMany(Parish::class, 'subCountyCode', 'subCountyCode');
     }
 
     //has many villages
@@ -39,6 +39,6 @@ class SubCounty extends Model
      */
     public function villages(): HasMany
     {
-        return $this->hasMany(Village::class, 'subCountyCode');
+        return $this->hasMany(Village::class, 'subCountyCode', 'subCountyCode');
     }
 }
