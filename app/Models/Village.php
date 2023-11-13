@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Village extends Model
 {
     use HasFactory;
-    protected $fillable =["districtCode", "countyCode", "subCountyCode","parishCode", "villageCode", "villageName"];
+    protected $fillable =["districtCode", "countyCode", "subCountyCode","parishCode", "villageCode", "villageName", "uuid"];
     //belongs to district
     /**
      * Get the district associated with the parish.

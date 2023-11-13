@@ -10,7 +10,7 @@ class District extends Model
 {
     use HasFactory;
 
-    protected $fillable =["districtCode", "districtName"];
+    protected $fillable =["districtCode", "districtName" ,"uuid"];
 
     //has many counties
     /**

@@ -11,7 +11,7 @@ class SubCounty extends Model
 {
     use HasFactory;
 
-    protected $fillable =["districtCode", "countyCode", "subCountyCode", "subCountyName"];
+    protected $fillable =["districtCode", "countyCode", "subCountyCode", "subCountyName", "uuid"];
 
     //belongs to district
     public function district():BelongsTo

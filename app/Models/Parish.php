@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Parish extends Model
 {
     use HasFactory;
-    protected $fillable =["districtCode", "countyCode", "subCountyCode","parishCode", "parishName"];
+    protected $fillable =["districtCode", "countyCode", "subCountyCode","parishCode", "parishName", "uuid"];
 
     //belongs to district
     /**
