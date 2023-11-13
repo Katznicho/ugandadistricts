@@ -33,18 +33,45 @@ Route::prefix('uganda/data/v1')->group(function () {
     Route::get("/district/{uuid}/subcounties", [DistrictController::class, 'getDistrictSubCounties']);
     Route::get("/district/{uuid}/parishes", [DistrictController::class, 'getDistrictParishes']);
     Route::get("/district/{uuid}/villages", [DistrictController::class, 'getDistrictVillages']);
-
     //district
 
+    //county
     Route::get("/counties", [CountyController::class, 'getCounties']);
+    Route::get("/county/{uuid}", [CountyController::class, 'getCountyByUUID']);
+    Route::get("/county/{uuid}/subcounties", [CountyController::class, 'getCountySubCounties']);
+    Route::get("/county/{uuid}/parishes", [CountyController::class, 'getCountyParishes']);
+    Route::get("/county/{uuid}/villages", [CountyController::class, 'getCountyVillages']);
+    //county
+
+    //county and ditrict
+    //get subcounties by both county and district
+    Route::get("/subcounties/{uuid}/district/{uuid}/county", [CountyController::class, 'getSubCountiesByCountyAndDistrict']);
+    //get parish by both county and district
+    Route::get("/parishes/{uuid}/district/{uuid}/county", [CountyController::class, 'getParishesByCountyAndDistrict']);
+    //get villages by both county and district
+    Route::get("/villages/{uuid}/district/{uuid}/county", [CountyController::class, 'getVillagesByCountyAndDistrict']);
+    //county and district
+
+    //subcounty
     Route::get("/subcounties", [SubCountyController::class, 'getSubCounties']);
+    Route::get("/subcounty/{uuid}", [SubCountyController::class, 'getSubCountyByUUID']);
+    Route::get("/subcounty/{uuid}/parishes", [SubCountyController::class, 'getSubCountyParishes']);
+    Route::get("/subcounty/{uuid}/villages", [SubCountyController::class, 'getSubCountyVillages']);
+    //subcounty
+
+    //parish
     Route::get("/parishes", [ParishController::class, 'getParishes']);
+    Route::get("/parish/{uuid}", [ParishController::class, 'getParishByUUID']);
+    Route::get("/parish/{uuid}/villages", [ParishController::class, 'getParishVillages']);
+    //parish
+
+    //village
     Route::get("/villages", [VillageController::class, 'getVillages']);
+    Route::get("/village/{uuid}", [VillageController::class, 'getVillageByUUID']);
+    //village
 });
 
-// Route::get("district/{id}", function (Request $request, string $id) {
-//     return District::findOrFail($id)->with("counties");
-// });
+
 
 
 Route::get("district/{id}", function (Request $request, string $id) {
