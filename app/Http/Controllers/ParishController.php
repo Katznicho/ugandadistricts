@@ -6,9 +6,16 @@ use App\Http\Requests\StoreParishRequest;
 use App\Http\Requests\UpdateParishRequest;
 use App\Models\Parish;
 use Illuminate\Http\Request;
+use Doctrine\DBAL\Query\QueryException;
+use Dotenv\Exception\ValidationException;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Validator;
 
 class ParishController extends Controller
 {
+    private  string $VERSION = '1.0.0';
+
     /**
      * Display a listing of the resource.
      */
@@ -108,4 +115,89 @@ class ParishController extends Controller
 
         return $response;
     }
+
+    //
+    public function getParishByUUID(Request $request, string $uuid)
+    {
+        // Validate the UUID parameter
+        $validator = Validator::make(['uuid' => $uuid], [
+            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid UUID format'], 422);
+        }
+
+        try {
+            $parish = Parish::where('uuid', $uuid)->select("uuid", "parishName")->firstOrFail();
+
+            return response()->json([
+                'data' => $parish,
+                'version' => $this->VERSION
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return $this->handleException($e, 'parish not found', 404);
+        } catch (ValidationException $e) {
+            return $this->handleException($e, 'Validation failed', 422);
+        } catch (QueryException $e) {
+            return $this->handleException($e, 'Query error', 500);
+        } catch (Exception $e) {
+            return $this->handleException($e, 'An error occurred', 500);
+        }
+    }
+
+    /**
+     * Handle exceptions and return a consistent JSON structure.
+     *
+     * @param \Exception $e
+     * @param string $message
+     * @param int $statusCode
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function handleException(Exception $e, string $message, int $statusCode)
+    {
+        // Report the exception for further analysis (logging, monitoring, etc.)
+        report($e);
+
+        return response()->json(['error' => $message], $statusCode);
+    }
+
+
+
+
+    public function getParishVillages(Request $request, string $uuid)
+    {
+        // Validate the UUID parameter
+        $validator = Validator::make(['uuid' => $uuid], [
+            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid UUID format'], 422);
+        }
+
+        // Fetch district with villages
+        $parish = Parish::where('uuid', $uuid)->with("villages:uuid,parishCode,villageName")->firstOrFail();
+
+        // Check if villages exist for the parish
+        if ($parish->villages) {
+            $parish->villages->makeHidden('parishCode');
+            return response()->json([
+                'data' => [
+                    'county' => [
+                        'uuid' => $parish->uuid,
+                        'countyName' => $parish->countyName,
+                    ],
+                    'villages' => $parish->villages,
+                ],
+                'version' => $this->VERSION
+            ]);
+        }
+
+        // Handle case when no villages are found
+        return response()->json(['error' => 'No villages found for the district'], 404);
+    }
+    //
 }

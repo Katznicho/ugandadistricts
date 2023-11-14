@@ -6,9 +6,15 @@ use App\Http\Requests\StoreVillageRequest;
 use App\Http\Requests\UpdateVillageRequest;
 use App\Models\Village;
 use Illuminate\Http\Request;
+use Doctrine\DBAL\Query\QueryException;
+use Dotenv\Exception\ValidationException;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Validator;
 
 class VillageController extends Controller
 {
+    private  string $VERSION = '1.0.0';
     /**
      * Display a listing of the resource.
      */
@@ -107,5 +113,36 @@ class VillageController extends Controller
         ];
 
         return $response;
+    }
+
+
+    public function getVillageByUUID(Request $request, string $uuid)
+    {
+        // Validate the UUID parameter
+        $validator = Validator::make(['uuid' => $uuid], [
+            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid UUID format'], 422);
+        }
+
+        try {
+            $village = Village::where('uuid', $uuid)->select("uuid", "villageName")->firstOrFail();
+
+            return response()->json([
+                'data' => $village,
+                'version' => $this->VERSION
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return $this->handleException($e, 'parish not found', 404);
+        } catch (ValidationException $e) {
+            return $this->handleException($e, 'Validation failed', 422);
+        } catch (QueryException $e) {
+            return $this->handleException($e, 'Query error', 500);
+        } catch (Exception $e) {
+            return $this->handleException($e, 'An error occurred', 500);
+        }
     }
 }

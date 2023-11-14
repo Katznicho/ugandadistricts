@@ -45,12 +45,12 @@ Route::prefix('uganda/data/v1')->group(function () {
 
     //county and ditrict
     //get subcounties by both county and district
-    Route::get("/subcounties/{uuid}/district/{uuid}/county", [CountyController::class, 'getSubCountiesByCountyAndDistrict']);
+    Route::get("/subcounties/{districtuuid}/district/{countyuuid}/county", [CountyController::class, 'getSubCountiesByCountyAndDistrict']);
     //get parish by both county and district
-    Route::get("/parishes/{uuid}/district/{uuid}/county", [CountyController::class, 'getParishesByCountyAndDistrict']);
-    //get villages by both county and district
-    Route::get("/villages/{uuid}/district/{uuid}/county", [CountyController::class, 'getVillagesByCountyAndDistrict']);
-    //county and district
+    // Route::get("/parishes/{parishuuid}/district/{uuid}/county", [CountyController::class, 'getParishesByCountyAndDistrict']);
+    // //get villages by both county and district
+    // Route::get("/villages/{uuid}/district/{uuid}/county", [CountyController::class, 'getVillagesByCountyAndDistrict']);
+    // //county and district
 
     //subcounty
     Route::get("/subcounties", [SubCountyController::class, 'getSubCounties']);
