@@ -20,13 +20,17 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column;
 
 class DistrictResource extends Resource
 {
     protected static ?string $model = District::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    
+
     protected static ?string $navigationGroup = 'Uganda Data';
 
     protected static ?int $navigationSort = 1;
@@ -35,21 +39,28 @@ class DistrictResource extends Resource
     {
         return $form
             ->schema([
-                
-                 Forms\Components\Section::make('View District')
+
+                Forms\Components\Section::make('View District')
                     ->description('These are the details of the district')
                     ->schema([
                         Forms\Components\TextInput::make('districtCode')
-                        ->required()
-                        ->numeric()
-                        ->label('district Code'),
-                    Forms\Components\TextInput::make('districtName')
-                        ->required()
-                        ->label('district Name'),
+                            ->required()
+                            ->numeric()
+                            ->label('district Code'),
+                        Forms\Components\TextInput::make('districtName')
+                            ->required()
+                            ->label('district Name'),
                     ])
 
             ]);
     }
+
+    // public function getTableBulkActions()
+    // {
+    //     return  [
+    //         ExportBulkAction::make()
+    //     ];
+    // }
 
     public static function table(Table $table): Table
     {
@@ -74,14 +85,12 @@ class DistrictResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->searchable()
-                    ->label('created At')
-                    ,
+                    ->label('created At'),
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->searchable()
-                    ->label('updated At')
-                    ,
+                    ->label('updated At'),
             ])
             ->filters([
                 // Tables\Filters\TrashedFilter::make(),
@@ -103,27 +112,32 @@ class DistrictResource extends Resource
                     })
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
-                 
+
                         if ($data['from'] ?? null) {
                             $indicators[] = Indicator::make('Created from ' . Carbon::parse($data['from'])->toFormattedDateString())
                                 ->removeField('from');
                         }
-                 
+
                         if ($data['until'] ?? null) {
                             $indicators[] = Indicator::make('Created until ' . Carbon::parse($data['until'])->toFormattedDateString())
                                 ->removeField('until');
                         }
-                 
+
                         return $indicators;
                     })
             ])
             ->actions([
-                 Tables\Actions\ActionGroup::make([
+                Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make()
                         ->requiresConfirmation(),
-                 ])
+                ]),
+                ExportAction::make()->exports([
+                    ExcelExport::make()
+
+
+                ]),
 
             ])
             ->bulkActions([
@@ -132,6 +146,12 @@ class DistrictResource extends Resource
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
+                ExportBulkAction::make()
+                // ->askForFilename()
+                // ->askForWriterType(),
+
+
+
             ]);
     }
 
@@ -140,10 +160,10 @@ class DistrictResource extends Resource
         return [
             //
 
-           RelationManagers\CountiesRelationManager::class,
-           RelationManagers\SubcountiesRelationManager::class,
-           RelationManagers\ParishesRelationManager::class,
-           RelationManagers\VillagesRelationManager::class
+            RelationManagers\CountiesRelationManager::class,
+            RelationManagers\SubcountiesRelationManager::class,
+            RelationManagers\ParishesRelationManager::class,
+            RelationManagers\VillagesRelationManager::class
 
         ];
     }

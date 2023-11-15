@@ -6,6 +6,8 @@ use App\Http\Controllers\ParishController;
 use App\Http\Controllers\SubCountyController;
 use App\Http\Controllers\VillageController;
 use App\Models\District;
+use App\Models\Parish;
+use App\Models\SubCounty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -45,12 +47,12 @@ Route::prefix('uganda/data/v1')->group(function () {
 
     //county and ditrict
     //get subcounties by both county and district
-    Route::get("/subcounties/{districtuuid}/district/{countyuuid}/county", [CountyController::class, 'getSubCountiesByCountyAndDistrict']);
+    Route::get("/subcounties/{districtuuid}/district/{countyuuid}/county", [SubCountyController::class, 'getSubCountiesByCountyAndDistrict']);
     //get parish by both county and district
-    // Route::get("/parishes/{parishuuid}/district/{uuid}/county", [CountyController::class, 'getParishesByCountyAndDistrict']);
-    // //get villages by both county and district
-    // Route::get("/villages/{uuid}/district/{uuid}/county", [CountyController::class, 'getVillagesByCountyAndDistrict']);
-    // //county and district
+    Route::get("/parishes/{districtuuid}/district/{subcountyuuid}/subcounty/{countyuuid}/county", [ParishController::class, 'getParishesByCountyAndDistrict']);
+
+    //get villages by both county and district, subcounty
+    Route::get("/villages/{districtuuid}/district/{subcountyuuid}/subcounty/{parishuuid}/parish/{countyuuid}/county", [VillageController::class, 'getVillagesByCountyAndDistrictAndSubcounty']);
 
     //subcounty
     Route::get("/subcounties", [SubCountyController::class, 'getSubCounties']);
