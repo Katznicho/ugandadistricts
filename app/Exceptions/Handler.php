@@ -2,11 +2,14 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
+
+
     /**
      * The list of the inputs that are never flashed to the session on validation exceptions.
      *
@@ -27,4 +30,13 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    // protected function unauthenticated($request, AuthenticationException $exception)
+    // {
+    //     if ($request->expectsJson()) {
+    //         return response()->json(['error' => 'Unauthenticated.'], 401);
+    //     }
+
+    //     return parent::unauthenticated($request, $exception);
+    // }
 }

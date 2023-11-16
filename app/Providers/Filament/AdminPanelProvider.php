@@ -66,7 +66,7 @@ class AdminPanelProvider extends PanelProvider
                     ->avatarUploadComponent(fn () => FileUpload::make('avatar_url')->disk('profile-photos'))
                     ->enableTwoFactorAuthentication()
                     ->enableSanctumTokens(
-                        permissions: ['create', 'read', 'update', 'delete', 'list', 'view'],
+                        permissions: ['*' ,'create', 'read', 'update', 'delete', 'list', 'view'],
                     ),
                 // Customize the icon, action, modalHeading and anything else.
                 //PasswordButtonAction::make('secure_action')->label('Delete')->icon('heroicon-s-shield-check')->modalHeading('Confirmation')->action(fn () => $this->doAction())
