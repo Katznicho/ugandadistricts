@@ -2,15 +2,26 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 
-class User extends Authenticatable
+
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable;
+
+
+
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->avatar_url ? Storage::url($this->avatar_url) : null;
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +32,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar_url'
+
     ];
 
     /**
