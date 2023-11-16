@@ -20,42 +20,30 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Filament\Forms\Components\FileUpload;
 use Illuminate\Validation\Rules\Password;
-use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
 
-
-// ->registration()
-// ->passwordReset()
-// ->emailVerification()
-// ->profile();
-
-
-class AdminPanelProvider extends PanelProvider
+class AppPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
-            ->id('admin')
-            ->path('admin')
+            ->id('app')
+            ->path('app')
             ->login()
+            ->registration()
+            ->passwordReset()
+            ->emailVerification()
+            ->brandName('Uganda Data')
+            ->sidebarCollapsibleOnDesktop()
             ->colors([
                 'primary' => Color::Amber,
-                'success' => Color::Green,
-                'danger' => Color::Red,
-                'warning' => Color::Yellow,
-                'info' => Color::Blue,
-                'secondary' => Color::Gray,
-
             ])
-            ->navigationGroups([
-                'Uganda Data',
-                'Roles and Permissions',
-        
+            ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
+            ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
+            ->pages([
+                Pages\Dashboard::class,
             ])
             ->plugins([
-                FilamentSpatieRolesPermissionsPlugin::make(),
-                 \Hasnayeen\Themes\ThemesPlugin::make(),
-                // PasswordButtonAction::make('secure_action')->action('doSecureAction'),
+                \Hasnayeen\Themes\ThemesPlugin::make(),
                 BreezyCore::make()
                     ->myProfile(
                         shouldRegisterUserMenu: true,
@@ -74,25 +62,13 @@ class AdminPanelProvider extends PanelProvider
                     ->enableSanctumTokens(
                         permissions: ['*', 'create', 'read', 'update', 'delete', 'list', 'view'],
                     ),
-                
             ])
-            ->brandName('Uganda Data')
-            ->profile()
-            ->sidebarCollapsibleOnDesktop()
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
-
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class,
-                // Widgets\TotalDistrictsOverView::class,
+                Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
-
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
