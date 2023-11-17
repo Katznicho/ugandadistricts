@@ -9,14 +9,16 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
+use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
+use Filament\Models\Contracts\HasAvatar;
 
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, HasAvatar
 {
 
 
 
-    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable, AuthenticationLoggable;
 
     public function getFilamentAvatarUrl(): ?string
     {

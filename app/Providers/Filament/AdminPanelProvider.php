@@ -21,12 +21,12 @@ use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Filament\Forms\Components\FileUpload;
 use Illuminate\Validation\Rules\Password;
 use Althinect\FilamentSpatieRolesPermissions\FilamentSpatieRolesPermissionsPlugin;
+use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Auth\Reset;
+use Filament\Notifications\Auth\ResetPassword;
+use Tapp\FilamentAuthenticationLog\FilamentAuthenticationLogPlugin;
 
 
-// ->registration()
-// ->passwordReset()
-// ->emailVerification()
-// ->profile();
 
 
 class AdminPanelProvider extends PanelProvider
@@ -37,7 +37,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(Login::class)
+            ->passwordReset(Reset::class)
             ->colors([
                 'primary' => Color::Amber,
                 'success' => Color::Green,
@@ -50,11 +51,14 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Uganda Data',
                 'Roles and Permissions',
-        
+
             ])
             ->plugins([
+                FilamentAuthenticationLogPlugin::make(),
+                new \RickDBCN\FilamentEmail\FilamentEmail(),
+                \FilipFonal\FilamentLogManager\FilamentLogManager::make(),
                 FilamentSpatieRolesPermissionsPlugin::make(),
-                 \Hasnayeen\Themes\ThemesPlugin::make(),
+                \Hasnayeen\Themes\ThemesPlugin::make(),
                 // PasswordButtonAction::make('secure_action')->action('doSecureAction'),
                 BreezyCore::make()
                     ->myProfile(
@@ -69,12 +73,12 @@ class AdminPanelProvider extends PanelProvider
                         requiresCurrentPassword: true,
                     )
                     ->avatarUploadComponent(fn ($fileUpload) => $fileUpload->disableLabel())
-                    ->avatarUploadComponent(fn () => FileUpload::make('avatar_url')->disk('profile-photos'))
+                    // ->avatarUploadComponent(fn () => FileUpload::make('avatar_url')->disk('profile-photos'))
                     ->enableTwoFactorAuthentication()
                     ->enableSanctumTokens(
                         permissions: ['*', 'create', 'read', 'update', 'delete', 'list', 'view'],
                     ),
-                
+
             ])
             ->brandName('Uganda Data')
             ->profile()

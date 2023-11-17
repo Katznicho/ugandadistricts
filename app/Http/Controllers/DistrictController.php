@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Http\Requests\StoreDistrictRequest;
 use App\Http\Requests\UpdateDistrictRequest;
 use App\Models\District;
+use App\Traits\ApiRequestTrait;
+use App\Traits\UserTrait as TraitsUserTrait;
 use Doctrine\DBAL\Query\QueryException;
 use Dotenv\Exception\ValidationException;
 use Exception;
@@ -14,6 +17,7 @@ use Illuminate\Support\Facades\Validator;
 
 class DistrictController extends Controller
 {
+    use  TraitsUserTrait, ApiRequestTrait;
     private  string $VERSION = '1.0.0';
     /**
      * Display a listing of the resource.
@@ -80,46 +84,57 @@ class DistrictController extends Controller
      */
     public function getDistricts(Request $request)
     {
-        // Set the default limit and version
-        $limit = $request->input('limit', 100);
-        //$version = 1;
+        try {
+            // Set the default limit and version
+            $limit = $request->input('limit', 100);
+            //$version = 1;
 
-        // Get the requested page from the query parameters
-        $page = max(1, $request->input('page', 1));
+            // Get the requested page from the query parameters
+            $page = max(1, $request->input('page', 1));
 
-        // Get the sorting parameters from the query parameters
-        $sortColumn = $request->input('sort_column', 'districtName');
-        $sortOrder = $request->input('sort_order', 'asc');
+            // Get the sorting parameters from the query parameters
+            $sortColumn = $request->input('sort_column', 'districtName');
+            $sortOrder = $request->input('sort_order', 'asc');
 
-        // Ensure sort order is valid
-        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+            // Ensure sort order is valid
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
 
-        // Include related entities (counties, subcounties, parishes, villages) based on user request
-        $withEntities = collect(['counties', 'subcounties', 'parishes', 'villages'])
-            ->filter(fn ($entity) => $request->has("with_$entity"))
-            ->toArray();
+            // Include related entities (counties, subcounties, parishes, villages) based on user request
+            $withEntities = collect(['counties', 'subcounties', 'parishes', 'villages'])
+                ->filter(fn ($entity) => $request->has("with_$entity"))
+                ->toArray();
 
-        // Create a query builder for districts with selected related entities
-        $query = District::select('uuid', 'districtName')->with($withEntities);
+            // Create a query builder for districts with selected related entities
+            $query = District::select('uuid', 'districtName')->with($withEntities);
 
-        // Apply sorting based on the provided parameters
-        $query->orderBy($sortColumn, $sortOrder);
+            // Apply sorting based on the provided parameters
+            $query->orderBy($sortColumn, $sortOrder);
 
-        // Fetch paginated districts based on the query
-        $districts = $query->paginate($limit, ['*'], 'page', $page);
+            // Fetch paginated districts based on the query
+            $districts = $query->paginate($limit, ['*'], 'page', $page);
 
-        // Create a custom response structure
-        $response = [
-            'data' => $districts->items(),
-            'pagination' => [
-                'current_page' => $districts->currentPage(),
-                'per_page' => $limit,
-                'total' => $districts->total(),
-            ],
-            'version' => $this->VERSION,
-        ];
+            // Create a custom response structure
+            $response = [
+                'data' => $districts->items(),
+                'pagination' => [
+                    'current_page' => $districts->currentPage(),
+                    'per_page' => $limit,
+                    'total' => $districts->total(),
+                ],
+                'version' => $this->VERSION,
+            ];
 
-        return $response;
+            //create api request
+            // Create a new API request
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+
+
+            return $response;
+        } catch (\Throwable $th) {
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
     }
 
     /**

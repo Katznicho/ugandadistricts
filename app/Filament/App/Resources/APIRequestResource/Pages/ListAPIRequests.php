@@ -1,36 +1,29 @@
 <?php
 
-namespace App\Filament\Resources\DistrictResource\Pages;
+namespace App\Filament\App\Resources\APIRequestResource\Pages;
 
-use App\Filament\Resources\DistrictResource;
+use App\Filament\App\Resources\APIRequestResource;
 use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 
-class ListDistricts extends ListRecords
+class ListAPIRequests extends ListRecords
 {
-    protected static string $resource = DistrictResource::class;
+    protected static string $resource = APIRequestResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Actions\CreateAction::make(),
-        ];
-    }
+    // protected function getHeaderActions(): array
+    // {
+    //     return [
+    //         Actions\CreateAction::make(),
+    //     ];
+    // }
 
-
-
-    //add tabs here
     public function getTabs(): array
     {
         return [
             'all' => Tab::make(),
-            // 'active' => Tab::make()
-            //     ->modifyQueryUsing(fn (Builder $query) => $query->where('active', true)),
-            // 'inactive' => Tab::make()
-            //     ->modifyQueryUsing(fn (Builder $query) => $query->where('active', false)),
             'Today' => Tab::make()
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('created_at', Carbon::today())),
             'This week' => Tab::make()

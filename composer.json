@@ -12,6 +12,7 @@
         "althinect/filament-spatie-roles-permissions": "^2.2",
         "eightynine/filament-excel-import": "^3.0",
         "filament/filament": "^3.0-stable",
+        "filipfonal/filament-log-manager": "^2.0",
         "guzzlehttp/guzzle": "^7.2",
         "hasnayeen/themes": "^3.0",
         "jeffgreco13/filament-breezy": "^2.2",
@@ -21,7 +22,10 @@
         "noxoua/filament-activity-log": "^2.1",
         "psr/simple-cache": "^2.0",
         "pxlrbt/filament-excel": "^2.1",
-        "spatie/laravel-permission": "^6.1"
+        "rawilk/filament-password-input": "^1.1",
+        "rickdbcn/filament-email": "^1.0",
+        "spatie/laravel-permission": "^6.1",
+        "tapp/filament-authentication-log": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
