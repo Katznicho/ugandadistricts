@@ -38,12 +38,6 @@ class TicketResource extends Resource
 
     protected static bool $canCreateAnother = false;
 
-    public static function getEloquentQuery(): Builder
-    {
-        $user = auth()->user();
-        return static::getModel()::query()->where('user_id', $user->id);
-    }
-
     public static function form(Form $form): Form
     {
         return $form

@@ -1,30 +1,29 @@
 <?php
 
-namespace App\Filament\App\Resources;
+namespace App\Filament\Resources;
 
-use App\Filament\App\Resources\TicketResource\Pages;
-use App\Filament\App\Resources\TicketResource\RelationManagers;
+use App\Filament\Resources\TicketResource\Pages;
+use App\Filament\Resources\TicketResource\RelationManagers;
 use App\Models\Ticket;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use PhpOffice\PhpSpreadsheet\RichText\RichText;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
-use Filament\Forms\Components\RichEditor;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 
 class TicketResource extends Resource
 {
@@ -37,12 +36,6 @@ class TicketResource extends Resource
     protected static ?string $recordTitleAttribute = 'tickets';
 
     protected static bool $canCreateAnother = false;
-
-    public static function getEloquentQuery(): Builder
-    {
-        $user = auth()->user();
-        return static::getModel()::query()->where('user_id', $user->id);
-    }
 
     public static function form(Form $form): Form
     {

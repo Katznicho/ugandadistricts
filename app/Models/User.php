@@ -70,4 +70,13 @@ class User extends Authenticatable implements MustVerifyEmail, HasAvatar
     {
         return $this->hasMany(APIRequest::class, 'user_id');
     }
+
+    //user has many tickets
+    /**
+     * Get the tickets associated with the user.
+     */
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
 }

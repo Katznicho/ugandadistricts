@@ -11,6 +11,7 @@ class APIRequestOverview extends BaseWidget
     protected function getStats(): array
     {
         return [
+
             Stat::make('Total Requests', APIRequest::count())
                 ->icon('heroicon-s-arrow-path-rounded-square')
                 ->description('Total number of requests')
