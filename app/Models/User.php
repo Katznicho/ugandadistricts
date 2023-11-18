@@ -13,7 +13,7 @@ use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements MustVerifyEmail, HasAvatar
 {
@@ -64,4 +64,10 @@ class User extends Authenticatable implements MustVerifyEmail, HasAvatar
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    //has api requests
+    public function apiRequests(): HasMany
+    {
+        return $this->hasMany(APIRequest::class, 'user_id');
+    }
 }

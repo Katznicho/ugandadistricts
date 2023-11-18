@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Filament\App\Resources;
+namespace App\Filament\Resources\UserResource\RelationManagers;
 
-use App\Filament\App\Resources\APIRequestResource\Pages;
-use App\Filament\App\Resources\APIRequestResource\RelationManagers;
-use App\Models\APIRequest;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -18,59 +16,91 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
-class APIRequestResource extends Resource
+class ApiRequestsRelationManager extends RelationManager
 {
-    protected static ?string $model = APIRequest::class;
-
-    protected static ?string $navigationIcon = 'heroicon-s-arrow-path-rounded-square';
-
-    protected static ?string $navigationGroup = 'Requests';
-
-    protected static ?string $recordTitleAttribute = 'requests';
-
-    public static function getEloquentQuery(): Builder
-    {
-        $user = auth()->user();
-        return static::getModel()::query()->where('user_id', $user->id);
-    }
+    protected static string $relationship = 'apiRequests';
 
 
-    public static function form(Form $form): Form
+
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
-
-                Forms\Components\Section::make('View Request')
-                    ->description('These are the details of the request')
-                    ->schema([
-                        Forms\Components\TextInput::make('endpoint')
-                            ->required()
-                            ->label('end point'),
-                        Forms\Components\TextInput::make('method')
-                            ->required()
-                            ->label('Methood'),
-                        Forms\Components\TextInput::make('ip_address')
-                            ->required()
-                            ->label('IP Address'),
-                        Forms\Components\TextInput::make('status')
-                            ->required()
-                            ->label('Status'),
-                        Forms\Components\TextInput::make('created_at')
-                            ->required()
-                            ->label('created At'),
-                        Forms\Components\TextInput::make('updated_at')
-                            ->required()
-                            ->label('updated At'),
-                    ])
+                // Forms\Components\TextInput::make('user_id')
+                //     ->required()
+                //     ->maxLength(255),
+                Section::make(
+                    Forms\Components\TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+                )
+                    ->description("This is the name of the user")
+                    ->columns(2),
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
+            ->recordTitleAttribute('user_id')
             ->columns([
+                // Tables\Columns\TextColumn::make('user_id'),
+                TextColumn::make('endpoint')
+                    ->copyable()
+                    ->toggleable()
+                    ->copyMessage('end point copied')
+                    ->copyMessageDuration(1500)
+                    ->searchable()
+                    ->sortable()
+                    ->label('End Point'),
+                TextColumn::make('method')
+                    ->copyable()
+                    ->toggleable()
+                    ->copyMessage('method copied')
+                    ->copyMessageDuration(1500)
+                    ->searchable()
+                    ->sortable()
+                    ->label('Methood'),
+
+                TextColumn::make('ip_address')
+                    ->copyable()
+                    ->toggleable()
+                    ->copyMessage('ip address copied')
+                    ->copyMessageDuration(1500)
+                    ->searchable()
+                    ->sortable()
+                    ->label('IP Address'),
+                TextColumn::make('user_agent')
+                    ->copyable()
+                    ->toggleable()
+                    ->copyMessage('user agent copied')
+                    ->copyMessageDuration(1500)
+                    ->searchable()
+                    ->sortable()
+                    ->label('User Agent'),
+                TextColumn::make('status')
+                    ->copyable()
+                    ->toggleable()
+                    ->copyMessage('status copied')
+                    ->copyMessageDuration(1500)
+                    ->searchable()
+                    ->sortable()
+                    ->label('Status'),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->toggleable()
+                    ->sortable()
+                    ->searchable()
+                    ->label('created At'),
+                TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->toggleable()
+                    ->sortable()
+                    ->searchable()
+                    ->label('updated At'),
+            ])
+            ->filters([
                 TextColumn::make('endpoint')
                     ->copyable()
                     ->toggleable()
@@ -95,14 +125,6 @@ class APIRequestResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('IP Address'),
-                TextColumn::make('user_agent')
-                    ->copyable()
-                    ->toggleable()
-                    ->copyMessage('user agent copied')
-                    ->copyMessageDuration(1500)
-                    ->searchable()
-                    ->sortable()
-                    ->label('User Agent'),
                 TextColumn::make('status')
                     ->copyable()
                     ->toggleable()
@@ -168,36 +190,17 @@ class APIRequestResource extends Resource
                         return $indicators;
                     })
             ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
+            ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                // ExportAction::make()->exports([
-                //     ExcelExport::make()
-
-
-                // ]),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                // Tables\Actions\BulkActionGroup::make([
-                //     Tables\Actions\DeleteBulkAction::make(),
-                // ]),
-                ExportBulkAction::make()
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListAPIRequests::route('/'),
-            'view' => Pages\ViewAPIRequest::route('/{record}')
-            // 'create' => Pages\CreateAPIRequest::route('/create'),
-            // 'edit' => Pages\EditAPIRequest::route('/{record}/edit'),
-        ];
     }
 }

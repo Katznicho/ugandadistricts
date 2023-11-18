@@ -49,8 +49,12 @@ class AdminPanelProvider extends PanelProvider
 
             ])
             ->navigationGroups([
+                'Users',
                 'Uganda Data',
                 'Roles and Permissions',
+                'Logins',
+                'System',
+
 
             ])
             ->plugins([
@@ -91,7 +95,7 @@ class AdminPanelProvider extends PanelProvider
 
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
+                //Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
                 // Widgets\TotalDistrictsOverView::class,
             ])
