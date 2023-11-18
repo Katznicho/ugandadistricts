@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreParishRequest;
 use App\Http\Requests\UpdateParishRequest;
 use App\Models\Parish;
+use App\Traits\ApiRequestTrait;
 use Illuminate\Http\Request;
 use Doctrine\DBAL\Query\QueryException;
 use Dotenv\Exception\ValidationException;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ParishController extends Controller
 {
+    use ApiRequestTrait;
     private  string $VERSION = '1.0.0';
 
     /**
@@ -74,75 +76,92 @@ class ParishController extends Controller
 
     public function getParishes(Request $request)
     {
-        // Set the default limit and version
-        $limit = $request->input('limit', 100);
-        $version = 1;
+        try {
+            // Set the default limit and version
+            $limit = $request->input('limit', 100);
+            $version = 1;
 
-        // Get the requested page from the query parameters
-        $page = max(1, $request->input('page', 1));
+            // Get the requested page from the query parameters
+            $page = max(1, $request->input('page', 1));
 
-        // Get the sorting parameters from the query parameters
-        $sortColumn = $request->input('sort_column', 'parishName');
-        $sortOrder = $request->input('sort_order', 'asc');
+            // Get the sorting parameters from the query parameters
+            $sortColumn = $request->input('sort_column', 'parishName');
+            $sortOrder = $request->input('sort_order', 'asc');
 
-        // Ensure sort order is valid
-        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+            // Ensure sort order is valid
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
 
-        // Include related entities (counties, subcounties, parishes, villages) based on user request
-        $withEntities = collect(['villages'])
-            ->filter(fn ($entity) => $request->has("with_$entity"))
-            ->toArray();
+            // Include related entities (counties, subcounties, parishes, villages) based on user request
+            $withEntities = collect(['villages'])
+                ->filter(fn ($entity) => $request->has("with_$entity"))
+                ->toArray();
 
-        // Create a query builder for districts with selected related entities
-        $query = Parish::select('uuid', 'parishName')->with($withEntities);
+            // Create a query builder for districts with selected related entities
+            $query = Parish::select('uuid', 'parishName')->with($withEntities);
 
-        // Apply sorting based on the provided parameters
-        $query->orderBy($sortColumn, $sortOrder);
+            // Apply sorting based on the provided parameters
+            $query->orderBy($sortColumn, $sortOrder);
 
-        // Fetch paginated districts based on the query
-        $districts = $query->paginate($limit, ['*'], 'page', $page);
+            // Fetch paginated districts based on the query
+            $districts = $query->paginate($limit, ['*'], 'page', $page);
 
-        // Create a custom response structure
-        $response = [
-            'data' => $districts->items(),
-            'pagination' => [
-                'current_page' => $districts->currentPage(),
-                'per_page' => $limit,
-                'total' => $districts->total(),
-            ],
-            'version' => $version,
-        ];
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+            // Create a custom response structure
+            $response = [
+                'data' => $districts->items(),
+                'pagination' => [
+                    'current_page' => $districts->currentPage(),
+                    'per_page' => $limit,
+                    'total' => $districts->total(),
+                ],
+                'version' => $version,
+            ];
 
-        return $response;
+            return $response;
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+
+            return $this->handleException($th, 'An error occurred', 500);
+        }
     }
 
     //
     public function getParishByUUID(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
 
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
 
         try {
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
+            ]);
+
+            // Check if validation fails
+            if ($validator->fails()) {
+
+                return response()->json(['message' => 'Invalid UUID format'], 422);
+            }
             $parish = Parish::where('uuid', $uuid)->select("uuid", "parishName")->firstOrFail();
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
 
             return response()->json([
                 'data' => $parish,
                 'version' => $this->VERSION
             ]);
         } catch (ModelNotFoundException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'parish not found', 404);
         } catch (ValidationException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'Validation failed', 422);
         } catch (QueryException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'Query error', 500);
         } catch (Exception $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'An error occurred', 500);
         }
     }
@@ -168,36 +187,46 @@ class ParishController extends Controller
 
     public function getParishVillages(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
-
-        // Fetch district with villages
-        $parish = Parish::where('uuid', $uuid)->with("villages:uuid,parishCode,villageName")->firstOrFail();
-
-        // Check if villages exist for the parish
-        if ($parish->villages) {
-            $parish->villages->makeHidden('parishCode');
-            return response()->json([
-                'data' => [
-                    'county' => [
-                        'uuid' => $parish->uuid,
-                        'countyName' => $parish->countyName,
-                    ],
-                    'villages' => $parish->villages,
-                ],
-                'version' => $this->VERSION
+        try {
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
             ]);
-        }
 
-        // Handle case when no villages are found
-        return response()->json(['error' => 'No villages found for the district'], 404);
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
+
+            // Fetch district with villages
+            $parish = Parish::where('uuid', $uuid)->with("villages:uuid,parishCode,villageName")->firstOrFail();
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+
+            // Check if villages exist for the parish
+            if ($parish->villages) {
+                $parish->villages->makeHidden('parishCode');
+                return response()->json([
+                    'data' => [
+                        'county' => [
+                            'uuid' => $parish->uuid,
+                            'countyName' => $parish->countyName,
+                        ],
+                        'villages' => $parish->villages,
+                    ],
+                    'version' => $this->VERSION
+                ]);
+            }
+
+            // Handle case when no villages are found
+            return response()->json(['error' => 'No villages found for the district'], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+
+            return $this->handleException($th, 'An error occurred', 500);
+        }
     }
     //
 }

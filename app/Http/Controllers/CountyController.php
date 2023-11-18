@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCountyRequest;
 use App\Http\Requests\UpdateCountyRequest;
 use App\Models\County;
+use App\Traits\ApiRequestTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Doctrine\DBAL\Query\QueryException;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CountyController extends Controller
 {
+    use ApiRequestTrait;
     private  string $VERSION = '1.0.0';
     /**
      * Display a listing of the resource.
@@ -73,62 +75,70 @@ class CountyController extends Controller
 
     public function getCounties(Request $request)
     {
-        // Set the default limit and version
-        $limit = $request->input('limit', 100);
-        $version = 1;
+        try {
+            // Set the default limit and version
+            $limit = $request->input('limit', 100);
+            $version = 1;
 
-        // Get the requested page from the query parameters
-        $page = max(1, $request->input('page', 1));
+            // Get the requested page from the query parameters
+            $page = max(1, $request->input('page', 1));
 
-        // Get the sorting parameters from the query parameters
-        $sortColumn = $request->input('sort_column', 'countyName');
-        $sortOrder = $request->input('sort_order', 'asc');
+            // Get the sorting parameters from the query parameters
+            $sortColumn = $request->input('sort_column', 'countyName');
+            $sortOrder = $request->input('sort_order', 'asc');
 
-        // Ensure sort order is valid
-        $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
+            // Ensure sort order is valid
+            $sortOrder = in_array(strtolower($sortOrder), ['asc', 'desc']) ? strtolower($sortOrder) : 'asc';
 
-        // Include related entities (counties, subcounties, parishes, villages) based on user request
-        $withEntities = collect(['subcounties', 'parishes', 'villages'])
-            ->filter(fn ($entity) => $request->has("with_$entity"))
-            ->toArray();
+            // Include related entities (counties, subcounties, parishes, villages) based on user request
+            $withEntities = collect(['subcounties', 'parishes', 'villages'])
+                ->filter(fn ($entity) => $request->has("with_$entity"))
+                ->toArray();
 
-        // Create a query builder for districts with selected related entities
-        $query = County::select('uuid', 'countyName')->with($withEntities);
+            // Create a query builder for districts with selected related entities
+            $query = County::select('uuid', 'countyName')->with($withEntities);
 
-        // Apply sorting based on the provided parameters
-        $query->orderBy($sortColumn, $sortOrder);
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
 
-        // Fetch paginated districts based on the query
-        $districts = $query->paginate($limit, ['*'], 'page', $page);
+            // Apply sorting based on the provided parameters
+            $query->orderBy($sortColumn, $sortOrder);
 
-        // Create a custom response structure
-        $response = [
-            'data' => $districts->items(),
-            'pagination' => [
-                'current_page' => $districts->currentPage(),
-                'per_page' => $limit,
-                'total' => $districts->total(),
-            ],
-            'version' => $version,
-        ];
+            // Fetch paginated districts based on the query
+            $districts = $query->paginate($limit, ['*'], 'page', $page);
 
-        return $response;
+            // Create a custom response structure
+            $response = [
+                'data' => $districts->items(),
+                'pagination' => [
+                    'current_page' => $districts->currentPage(),
+                    'per_page' => $limit,
+                    'total' => $districts->total(),
+                ],
+                'version' => $version,
+            ];
+
+            return $response;
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+            return $this->handleException($th, 'An error occurred', 500);
+        }
     }
 
     //
     public function getCountyByUUID(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
 
         try {
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
+            ]);
+
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
             $county = County::where('uuid', $uuid)->select("uuid", "countyName")->firstOrFail();
 
             return response()->json([
@@ -136,12 +146,16 @@ class CountyController extends Controller
                 'version' => $this->VERSION
             ]);
         } catch (ModelNotFoundException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'county not found', 404);
         } catch (ValidationException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'Validation failed', 422);
         } catch (QueryException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'Query error', 500);
         } catch (Exception $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'An error occurred', 500);
         }
     }
@@ -174,36 +188,44 @@ class CountyController extends Controller
      */
     public function getCountySubCounties(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
-
-        $county = County::where('uuid', $uuid)->with(['subcounties:uuid,subcountyName,countyCode'])->firstOrFail();
-
-        // Check if subcounties exist for the county
-        if ($county->subcounties) {
-            $county->subcounties->makeHidden('countyCode');
-
-            return response()->json([
-                'data' => [
-                    'county' => [
-                        'uuid' => $county->uuid,
-                        'countyName' => $county->countyName,
-                    ],
-                    'subcounties' => $county->subcounties,
-                ],
-                'version' => $this->VERSION
+        try {
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
             ]);
-        }
 
-        // Handle case when no subcounties are found
-        return response()->json(['error' => 'No subcounties found for the district'], 404);
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
+
+            $county = County::where('uuid', $uuid)->with(['subcounties:uuid,subcountyName,countyCode'])->firstOrFail();
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+
+            // Check if subcounties exist for the county
+            if ($county->subcounties) {
+                $county->subcounties->makeHidden('countyCode');
+
+                return response()->json([
+                    'data' => [
+                        'county' => [
+                            'uuid' => $county->uuid,
+                            'countyName' => $county->countyName,
+                        ],
+                        'subcounties' => $county->subcounties,
+                    ],
+                    'version' => $this->VERSION
+                ]);
+            }
+
+            // Handle case when no subcounties are found
+            return response()->json(['message' => 'No subcounties found for the district', 'data' => []], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+            return $this->handleException($th, 'An error occurred', 500);
+        }
     }
 
     /**
@@ -215,36 +237,46 @@ class CountyController extends Controller
      */
     public function getCountyParishes(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
-
-
-        $county = County::where('uuid', $uuid)->with("parishes:uuid,parishName,countyCode")->firstOrFail();
-
-        // Check if parishes exist for the county
-        if ($county->parishes) {
-            $county->parishes->makeHidden('countyCode');
-            return response()->json([
-                'data' => [
-                    'county' => [
-                        'uuid' => $county->uuid,
-                        'countyName' => $county->countyName,
-                    ],
-                    'parishes' => $county->parishes,
-                ],
-                'version' => $this->VERSION
+        try {
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
             ]);
-        }
 
-        // Handle case when no parishes are found
-        return response()->json(['error' => 'No parishes found for the district'], 404);
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
+
+
+            $county = County::where('uuid', $uuid)->with("parishes:uuid,parishName,countyCode")->firstOrFail();
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+
+            // Check if parishes exist for the county
+            if ($county->parishes) {
+                $county->parishes->makeHidden('countyCode');
+                return response()->json([
+                    'data' => [
+                        'county' => [
+                            'uuid' => $county->uuid,
+                            'countyName' => $county->countyName,
+                        ],
+                        'parishes' => $county->parishes,
+                    ],
+                    'version' => $this->VERSION
+                ]);
+            }
+
+            // Handle case when no parishes are found
+            return response()->json(['message' => 'No parishes found for the district', 'data' => []], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+
+            return $this->handleException($th, 'An error occurred', 500);
+        }
     }
 
     /**
@@ -256,36 +288,47 @@ class CountyController extends Controller
      */
     public function getCountyVillages(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
+        try {
 
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
-
-        // Fetch district with villages
-        $county = County::where('uuid', $uuid)->with("villages:uuid,countyCode,villageName")->firstOrFail();
-
-        // Check if villages exist for the county
-        if ($county->villages) {
-            $county->villages->makeHidden('countyCode');
-            return response()->json([
-                'data' => [
-                    'county' => [
-                        'uuid' => $county->uuid,
-                        'countyName' => $county->countyName,
-                    ],
-                    'villages' => $county->villages,
-                ],
-                'version' => $this->VERSION
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
             ]);
-        }
 
-        // Handle case when no villages are found
-        return response()->json(['error' => 'No villages found for the district'], 404);
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
+
+            // Fetch district with villages
+            $county = County::where('uuid', $uuid)->with("villages:uuid,countyCode,villageName")->firstOrFail();
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+
+            // Check if villages exist for the county
+            if ($county->villages) {
+                $county->villages->makeHidden('countyCode');
+                return response()->json([
+                    'data' => [
+                        'county' => [
+                            'uuid' => $county->uuid,
+                            'countyName' => $county->countyName,
+                        ],
+                        'villages' => $county->villages,
+                    ],
+                    'version' => $this->VERSION
+                ]);
+            }
+
+            // Handle case when no villages are found
+            return response()->json(['message' => 'No villages found for the district', 'data' => []], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+
+            return $this->handleException($th, 'An error occurred', 500);
+        }
     }
     //
 }
