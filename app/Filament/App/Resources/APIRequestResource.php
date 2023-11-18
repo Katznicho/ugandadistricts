@@ -14,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -26,6 +27,8 @@ class APIRequestResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-s-arrow-path-rounded-square';
 
     protected static ?string $navigationGroup = 'Requests';
+
+    protected static ?string $recordTitleAttribute = 'requests';
 
     public static function getEloquentQuery(): Builder
     {
@@ -70,6 +73,7 @@ class APIRequestResource extends Resource
             ->columns([
                 TextColumn::make('endpoint')
                     ->copyable()
+                    ->toggleable()
                     ->copyMessage('end point copied')
                     ->copyMessageDuration(1500)
                     ->searchable()
@@ -77,6 +81,7 @@ class APIRequestResource extends Resource
                     ->label('End Point'),
                 TextColumn::make('method')
                     ->copyable()
+                    ->toggleable()
                     ->copyMessage('method copied')
                     ->copyMessageDuration(1500)
                     ->searchable()
@@ -84,6 +89,7 @@ class APIRequestResource extends Resource
                     ->label('Methood'),
                 TextColumn::make('ip_address')
                     ->copyable()
+                    ->toggleable()
                     ->copyMessage('ip address copied')
                     ->copyMessageDuration(1500)
                     ->searchable()
@@ -91,6 +97,7 @@ class APIRequestResource extends Resource
                     ->label('IP Address'),
                 TextColumn::make('status')
                     ->copyable()
+                    ->toggleable()
                     ->copyMessage('status copied')
                     ->copyMessageDuration(1500)
                     ->searchable()
@@ -98,16 +105,29 @@ class APIRequestResource extends Resource
                     ->label('Status'),
                 TextColumn::make('created_at')
                     ->dateTime()
+                    ->toggleable()
                     ->sortable()
                     ->searchable()
                     ->label('created At'),
                 TextColumn::make('updated_at')
                     ->dateTime()
+                    ->toggleable()
                     ->sortable()
                     ->searchable()
                     ->label('updated At'),
             ])
             ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'SUCCESS' => 'Completed',
+                        'FAILED' => 'Failed',
+                        'PENDING' => 'Pending',
+                    ])
+                    ->indicator('Status')
+                    ->placeholder('Select Status')
+                    ->searchable(),
+
                 Filter::make('created_at')
                     ->form([
                         DatePicker::make('created_from'),
@@ -167,6 +187,7 @@ class APIRequestResource extends Resource
     {
         return [
             'index' => Pages\ListAPIRequests::route('/'),
+            'view' => Pages\ViewAPIRequest::route('/{record}')
             // 'create' => Pages\CreateAPIRequest::route('/create'),
             // 'edit' => Pages\EditAPIRequest::route('/{record}/edit'),
         ];

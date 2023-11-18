@@ -160,20 +160,20 @@ class DistrictController extends Controller
      */
     public function getDistrictByUUID(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
 
         try {
-            // Proceed to fetch the district
-            //$district = District::findOrFail($uuid);
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
+            ]);
+
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
+
             $district = District::where('uuid', $uuid)->select("uuid", "districtName")->firstOrFail();
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
 
             return response()->json([
                 'data' => $district,
@@ -246,12 +246,16 @@ class DistrictController extends Controller
                 'version' => $this->VERSION
             ]);
         } catch (ModelNotFoundException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'District not found', 404);
         } catch (ValidationException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'Validation failed', 422);
         } catch (QueryException $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'Query error', 500);
         } catch (Exception $e) {
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
             return $this->handleException($e, 'An error occurred', 500);
         }
     }
@@ -266,37 +270,45 @@ class DistrictController extends Controller
      */
     public function getDistrictSubCounties(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
-
-        // Fetch district with subcounties
-        $district = District::where('uuid', $uuid)->with(['subcounties:uuid,subcountyName,districtCode'])->firstOrFail();
-
-        // Check if subcounties exist for the district
-        if ($district->subcounties) {
-            $district->subcounties->makeHidden('districtCode');
-
-            return response()->json([
-                'data' => [
-                    'district' => [
-                        'uuid' => $district->uuid,
-                        'districtName' => $district->districtName,
-                    ],
-                    'subcounties' => $district->subcounties,
-                ],
-                'version' => $this->VERSION
+        try {
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
             ]);
-        }
 
-        // Handle case when no subcounties are found
-        return response()->json(['error' => 'No subcounties found for the district'], 404);
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
+
+            // Fetch district with subcounties
+            $district = District::where('uuid', $uuid)->with(['subcounties:uuid,subcountyName,districtCode'])->firstOrFail();
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+
+            // Check if subcounties exist for the district
+            if ($district->subcounties) {
+                $district->subcounties->makeHidden('districtCode');
+
+                return response()->json([
+                    'data' => [
+                        'district' => [
+                            'uuid' => $district->uuid,
+                            'districtName' => $district->districtName,
+                        ],
+                        'subcounties' => $district->subcounties,
+                    ],
+                    'version' => $this->VERSION
+                ]);
+            }
+
+            // Handle case when no subcounties are found
+            return response()->json(['message' => 'No subcounties found for the district'], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
     }
 
     /**
@@ -308,36 +320,45 @@ class DistrictController extends Controller
      */
     public function getDistrictParishes(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
-
-        // Fetch district with parishes
-        $district = District::where('uuid', $uuid)->with("parishes:uuid,parishName,districtCode")->firstOrFail();
-
-        // Check if parishes exist for the district
-        if ($district->parishes) {
-            $district->parishes->makeHidden('districtCode');
-            return response()->json([
-                'data' => [
-                    'district' => [
-                        'uuid' => $district->uuid,
-                        'districtName' => $district->districtName,
-                    ],
-                    'parishes' => $district->parishes,
-                ],
-                'version' => $this->VERSION
+        try {
+            //code...
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
             ]);
-        }
 
-        // Handle case when no parishes are found
-        return response()->json(['error' => 'No parishes found for the district'], 404);
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
+
+            // Fetch district with parishes
+            $district = District::where('uuid', $uuid)->with("parishes:uuid,parishName,districtCode")->firstOrFail();
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+
+            // Check if parishes exist for the district
+            if ($district->parishes) {
+                $district->parishes->makeHidden('districtCode');
+                return response()->json([
+                    'data' => [
+                        'district' => [
+                            'uuid' => $district->uuid,
+                            'districtName' => $district->districtName,
+                        ],
+                        'parishes' => $district->parishes,
+                    ],
+                    'version' => $this->VERSION
+                ]);
+            }
+
+            // Handle case when no parishes are found
+            return response()->json(['message' => 'No parishes found for the district'], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
     }
 
     /**
@@ -349,35 +370,43 @@ class DistrictController extends Controller
      */
     public function getDistrictVillages(Request $request, string $uuid)
     {
-        // Validate the UUID parameter
-        $validator = Validator::make(['uuid' => $uuid], [
-            'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
-        ]);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => 'Invalid UUID format'], 422);
-        }
-
-        // Fetch district with villages
-        $district = District::where('uuid', $uuid)->with("villages:uuid,districtCode,villageName")->firstOrFail();
-
-        // Check if villages exist for the district
-        if ($district->villages) {
-            $district->villages->makeHidden('districtCode');
-            return response()->json([
-                'data' => [
-                    'district' => [
-                        'uuid' => $district->uuid,
-                        'districtName' => $district->districtName,
-                    ],
-                    'villages' => $district->villages,
-                ],
-                'version' => $this->VERSION
+        try {
+            // Validate the UUID parameter
+            $validator = Validator::make(['uuid' => $uuid], [
+                'uuid' => 'required|uuid', // Assumes the UUID follows the standard format
             ]);
-        }
 
-        // Handle case when no villages are found
-        return response()->json(['error' => 'No villages found for the district'], 404);
+            // Check if validation fails
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Invalid UUID format'], 422);
+            }
+
+            // Fetch district with villages
+            $district = District::where('uuid', $uuid)->with("villages:uuid,districtCode,villageName")->firstOrFail();
+
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.SUCCESS'), $request->userAgent());
+
+            // Check if villages exist for the district
+            if ($district->villages) {
+                $district->villages->makeHidden('districtCode');
+                return response()->json([
+                    'data' => [
+                        'district' => [
+                            'uuid' => $district->uuid,
+                            'districtName' => $district->districtName,
+                        ],
+                        'villages' => $district->villages,
+                    ],
+                    'version' => $this->VERSION
+                ]);
+            }
+
+            // Handle case when no villages are found
+            return response()->json(['message' => 'No villages found for the district'], 404);
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->createRequest($request->url(), $request->ip(), $request->method(), $request->fullUrl(), config('status.FAILED'), $request->userAgent());
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
     }
 }

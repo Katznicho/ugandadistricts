@@ -34,9 +34,7 @@ class AppPanelProvider extends PanelProvider
             ->login(Login::class)
             ->registration(Register::class)
             ->passwordReset()
-            // ->resetPassword(Reset::class)
             ->profile()
-
             ->emailVerification()
             ->brandName('Uganda Data')
             ->sidebarCollapsibleOnDesktop()
@@ -71,7 +69,7 @@ class AppPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
+                //Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([

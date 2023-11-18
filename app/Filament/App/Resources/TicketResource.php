@@ -1,103 +1,123 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\App\Resources;
 
-use App\Filament\Resources\DistrictResource\Pages;
-use App\Filament\Resources\DistrictResource\RelationManagers;
-use App\Models\County;
-use App\Models\District;
+use App\Filament\App\Resources\TicketResource\Pages;
+use App\Filament\App\Resources\TicketResource\RelationManagers;
+use App\Models\Ticket;
 use Carbon\Carbon;
-use Filament\Actions\ActionGroup;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Filament\Forms\Components\RichEditor;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 
-use pxlrbt\FilamentExcel\Columns\Column;
-
-class DistrictResource extends Resource
+class TicketResource extends Resource
 {
-    protected static ?string $model = District::class;
+    protected static ?string $model = Ticket::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-ticket';
 
-    protected static ?string $navigationGroup = 'Uganda Data';
+    protected static ?string $navigationGroup = 'Support';
 
-    
+    protected static ?string $recordTitleAttribute = 'tickets';
 
-    protected static ?int $navigationSort = 1;
+    protected static bool $canCreateAnother = false;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-
-                Forms\Components\Section::make('View District')
-                    ->description('These are the details of the district')
+                Section::make('Ticket')
+                    ->description('Create a new ticket')
+                    ->icon('heroicon-o-ticket')
+                    ->iconColor('warning')
                     ->schema([
-                        Forms\Components\TextInput::make('districtCode')
+                        TextInput::make('subject')
                             ->required()
-                            ->numeric()
-                            ->label('district Code'),
-                        Forms\Components\TextInput::make('districtName')
+                            ->label('Subject')
+                            ->placeholder('enter subject')
+                            ->columnSpan(2),
+                        RichEditor::make('description')
                             ->required()
-                            ->label('district Name'),
-                    ])
+                            ->label('Description')
+                            ->placeholder('enter description')
+                            ->columnSpan(2),
 
+
+
+                    ])
+                    ->columns(2)
+                // ->columnSpanFull()
+
+                ,
             ]);
     }
-
-    // public function getTableBulkActions()
-    // {
-    //     return  [
-    //         ExportBulkAction::make()
-    //     ];
-    // }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                //
-                TextColumn::make('districtCode')
-                    ->copyable()
-                    ->copyMessage('district code copied')
-                    ->copyMessageDuration(1500)
+                TextColumn::make('subject')
+                    ->label('Subject')
                     ->searchable()
                     ->sortable()
-                    ->label('district Code'),
-                TextColumn::make('districtName')
-                    ->copyable()
-                    ->copyMessage('district name copied')
-                    ->copyMessageDuration(1500)
+                    ->wrap()
+                    ->toggleable(),
+                TextColumn::make('description')
+                    ->label('Description')
                     ->searchable()
                     ->sortable()
-                    ->label('district Name'),
+                    ->wrap()
+                    ->toggleable()
+                    ->html(),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->searchable()
+                    ->sortable()
+                    ->wrap()
+                    ->toggleable(),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Created At')
                     ->sortable()
                     ->searchable()
-                    ->label('created At'),
+                    ->toggleable(),
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Updated At')
                     ->sortable()
                     ->searchable()
-                    ->label('updated At'),
+                    ->toggleable(),
+
+
+
+
             ])
             ->filters([
-                // Tables\Filters\TrashedFilter::make(),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'open' => 'Open',
+                        'closed' => 'Closed',
+                        'in progress' => 'In Progress',
+                    ])
+                    ->indicator('Status')
+                    ->placeholder('Select Status')
+                    ->searchable(),
+
                 Filter::make('created_at')
                     ->form([
                         DatePicker::make('created_from'),
@@ -163,30 +183,16 @@ class DistrictResource extends Resource
     {
         return [
             //
-
-            RelationManagers\CountiesRelationManager::class,
-            RelationManagers\SubcountiesRelationManager::class,
-            RelationManagers\ParishesRelationManager::class,
-            RelationManagers\VillagesRelationManager::class
-
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDistricts::route('/'),
-            'create' => Pages\CreateDistrict::route('/create'),
-            'view' => Pages\ViewDistrict::route('/{record}'),
-            'edit' => Pages\EditDistrict::route('/{record}/edit'),
+            'index' => Pages\ListTickets::route('/'),
+            'create' => Pages\CreateTicket::route('/create'),
+            'edit' => Pages\EditTicket::route('/{record}/edit'),
+            'view' => Pages\ViewTicket::route('/{record}')
         ];
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
     }
 }
